@@ -15,18 +15,19 @@ class FinanceCoach:
         return self.finance_logic.process_command(command)
 
     def run(self):
-        self.voice_engine.speak("Hello! I'm your finance coach. How can I help?")
+        self.voice_engine.speak("Hello! I'm your AI Finance Coach. Let's chat about your finances!")
 
         while True:
             command = self.voice_engine.listen()
 
-            if any(word in command for word in ["exit", "quit", "bye"]):
-                self.voice_engine.speak("Goodbye! Keep managing your finances!")
+            if command in ['stop', 'exit', 'quit']:
                 break
-            else:
-                # Process ANY command directly
-                response = self.process_command(command)
-                self.voice_engine.speak(response)
+
+            response = self.process_command(command)
+            self.voice_engine.speak(response)
+            print()  # Empty line for readability
+
+        self.voice_engine.speak("Goodbye! Keep tracking your financial goals!")
 
 
 if __name__ == "__main__":
