@@ -64,7 +64,7 @@ class FinanceLogic:
         print(f"Processing: {command}")
 
         # First check for general queries
-        if any(word in command for word in ["balance", "how much", "money left"]):
+        if any(word in command for word in ["balance", "how much", "money left", "my income", "income"]):
             return self.get_balance()
         elif any(word in command for word in ["spending", "expenses", "how much have i spent"]):
             return self.get_spending()
@@ -75,35 +75,62 @@ class FinanceLogic:
             return self.process_income_command(command)
         elif any(word in command for word in ["budget", "limit"]):
             return self.get_budget_status()
+        elif any(word in command for word in ["advice", "tip"]):
+            return "Try saving 20% of your income each month!"
         else:
-            return "I can help track spending, income, balance, or budget. Try 'I spent $50 on groceries' or 'What's my balance?'"
+            return "I can help with balance, spending, budget, or adding transactions."
+
     def process_spending_command(self, command):
         try:
-            # Extract amount - look for $ or numbers
-            if "$" in command:
-                amount_str = command.split("$")[1].split()[0]
-            else:
-                # Look for numbers after "spent"
-                words = command.split()
-                for i, word in enumerate(words):
-                    if word in ["spent", "paid"] and i + 1 < len(words):
-                        amount_str = words[i + 1]
-                        break
-                else:
-                    return "How much did you spend? Please say 'I spent $50 on groceries'"
+            print(f"🔍 Processing spending command: {command}")
 
-            amount = float(amount_str)
+            # Convert words to numbers (fifty → 50)
+            word_to_number = {
+                'fifty': 50, 'fifteen': 15, 'twenty': 20, 'thirty': 30,
+                'forty': 40, 'sixty': 60, 'seventy': 70, 'eighty': 80,
+                'ninety': 90, 'hundred': 100
+            }
+
+            # Extract amount - look for numbers or number words
+            amount = None
+            words = command.split()
+
+            for i, word in enumerate(words):
+                # Check for number words
+                if word in word_to_number:
+                    amount = word_to_number[word]
+                    break
+                # Check for digits
+                elif word.isdigit():
+                    amount = float(word)
+                    break
+                # Check for numbers with symbols
+                elif any(char.isdigit() for char in word):
+                    # Extract numbers from mixed strings
+                    import re
+                    numbers = re.findall(r'\d+', word)
+                    if numbers:
+                        amount = float(numbers[0])
+                        break
+
+            if amount is None:
+                return "How much did you spend? Please say 'I spent 50 dollars on groceries'"
 
             # Extract category
-            if "on" in command:
-                category = command.split("on")[1].strip().split()[0]
-            else:
-                category = "other"
+            category = "other"
+            if "grocery" in command or "food" in command:
+                category = "groceries"
+            elif "entertainment" in command or "movie" in command:
+                category = "entertainment"
+            elif "transport" in command or "gas" in command:
+                category = "transport"
+            elif "rent" in command:
+                category = "rent"
 
-            return self.add_transaction(amount, category, "User added expense", "expense")
+            return self.add_transaction(amount, category, "Voice added expense", "expense")
 
         except Exception as e:
-            return f"Sorry, I didn't understand. Try 'I spent $50 on groceries'"
+            return f"Sorry, I didn't understand. Try 'I spent 50 dollars on groceries'"
 
     def process_income_command(self, command):
         try:
