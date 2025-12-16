@@ -63,6 +63,11 @@ class FinanceLogic:
         command = command.lower()
         print(f"Processing: {command}")
 
+        if any(word in command for word in ["chart", "graph", "visualize", "show me"]):
+            return self.handle_visualization(command)
+        elif any(word in command for word in ["report", "export", "excel", "pdf", "tax"]):
+            return self.handle_reporting(command)
+
         # First check for general queries
         if any(word in command for word in ["balance", "how much", "money left", "my income", "income"]):
             return self.get_balance()
@@ -203,3 +208,77 @@ class FinanceLogic:
         )
         self.conn.commit()
         return f"Added {type}: ${amount} for {category} - {description}"
+
+    def handle_visualization(self, command):
+        """Handle visualization requests"""
+        try:
+            # Import here to avoid circular imports
+            from visualization import FinanceVisualizer
+            visualizer = FinanceVisualizer()
+
+            if "spending" in command:
+                chart_path = visualizer.create_spending_chart()
+                if chart_path:
+                    return f"I created a spending chart! Check '{chart_path}'"
+                else:
+                    return "No spending data available for visualization"
+
+            elif "income" in command or "expense" in command:
+                chart_path = visualizer.create_income_expense_chart()
+                if chart_path:
+                    return f"I created an income vs expenses chart! Check '{chart_path}'"
+                else:
+                    return "No transaction data available"
+
+            elif "budget" in command:
+                chart_path = visualizer.create_budget_chart()
+                if chart_path:
+                    return f"I created a budget chart! Check '{chart_path}'"
+                else:
+                    return "No budget data available"
+
+            elif "summary" in command or "report" in command:
+                chart_path = visualizer.show_financial_summary()
+                if chart_path:
+                    return f"I created a comprehensive financial report! Check '{chart_path}'"
+                else:
+                    return "Not enough data for a full report"
+
+            else:
+                return "I can create charts for: spending, income vs expenses, budget, or a full summary report"
+
+        except Exception as e:
+            return f"Sorry, I couldn't create the visualization: {e}"
+
+    def handle_reporting(self, command):
+        """Handle reporting requests"""
+        try:
+            from reporting import FinancialReporter
+            reporter = FinancialReporter()
+
+            if "monthly report" in command or "month report" in command:
+                filepath, message = reporter.generate_monthly_report()
+                if filepath:
+                    return f"{message} File saved: {filepath}"
+                else:
+                    return "No data available for monthly report"
+
+            elif "export" in command or "excel" in command:
+                filepath = reporter.export_to_excel()
+                return f"Data exported to Excel! File saved: {filepath}"
+
+            elif "tax" in command or "deduction" in command:
+                filepath, message = reporter.generate_tax_summary()
+                if filepath:
+                    return f"{message} File saved: {filepath}"
+                else:
+                    return "No tax-deductible expenses found"
+
+            elif "report" in command:
+                return "I can generate: monthly reports, Excel exports, or tax summaries"
+
+            else:
+                return "Available reports: monthly report, Excel export, tax summary"
+
+        except Exception as e:
+            return f"Sorry, I couldn't generate the report: {e}"
